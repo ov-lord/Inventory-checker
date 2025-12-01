@@ -1,14 +1,6 @@
-// script.js — نسخة كاملة نهائية مع تشخيص وتحسينات
-// ---------------------------------------------
-// ملاحظات:
-// - تأكد من إضافة مكتبة SheetJS في HTML:
-//   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-// - تأكد من أن <input id="fileInput"> لديه accept=".xlsx,.xls,.csv"
-
 const fileInput = document.getElementById("fileInput");
 const badge = document.getElementById("countBadge");
 
-// عنصر للتفاصيل (إن لم يكن موجودًا سيتم إنشاؤه)
 let diag = document.getElementById("diagDetails");
 if (!diag) {
     diag = document.createElement("pre");
@@ -31,229 +23,127 @@ function logDiag(msg, level = "info") {
     console[level === "error" ? "error" : level === "warn" ? "warn" : "log"](msg);
 }
 
-function clearDiag() {
-    diag.textContent = "";
-}
-
-function showError(msg) {
-    badge.textContent = msg;
-    badge.style.background = "#d9534f";
-    logDiag(msg, "error");
-}
-
-function showInfo(msg) {
-    badge.textContent = msg;
-    badge.style.background = "#f0ad4e";
-    logDiag(msg, "info");
-}
-
-function showOK(msg) {
-    badge.textContent = msg;
-    badge.style.background = "#5cb85c";
-    logDiag(msg, "ok");
-}
+function clearDiag() { diag.textContent = ""; }
+function showError(msg) { badge.textContent = msg; badge.style.background = "#d9534f"; logDiag(msg, "error"); }
+function showInfo(msg) { badge.textContent = msg; badge.style.background = "#f0ad4e"; logDiag(msg, "info"); }
+function showOK(msg) { badge.textContent = msg; badge.style.background = "#5cb85c"; logDiag(msg, "ok"); }
 
 fileInput.addEventListener("change", async function (event) {
     clearDiag();
     logDiag("بدأت عملية فحص الملف...", "info");
 
     const file = event.target.files && event.target.files[0];
-    if (!file) {
-        showError("لم يتم اختيار ملف. الرجاء اختيار ملف Excel (.xlsx/.xls) أو CSV.");
-        return;
-    }
+    if (!file) { showError("لم يتم اختيار ملف."); return; }
 
-    // 1) فحص امتداد الملف
     const name = file.name || "";
     const ext = name.split(".").pop().toLowerCase();
     logDiag(`اسم الملف: ${name}`);
-    if (!["xlsx", "xls", "csv"].includes(ext)) {
-        showError(`نوع الملف غير مدعوم: .${ext} — استخدم .xlsx, .xls أو .csv`);
-        return;
-    }
+    if (!["xlsx", "xls", "csv"].includes(ext)) { showError(`نوع الملف غير مدعوم: .${ext}`); return; }
     logDiag(`امتداد صالح: .${ext}`);
 
-    // 2) فحص وجود مكتبة XLSX
-    if (typeof XLSX === "undefined") {
-        showError("مكتبة XLSX غير موجودة. أضف هذا السطر داخل <head>:\n<script src=\"https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js\"></script>");
-        return;
-    }
+    if (typeof XLSX === "undefined") { showError("مكتبة XLSX غير موجودة."); return; }
     logDiag("مكتبة XLSX موجودة.");
 
-    // 3) قراءة الملف كـ ArrayBuffer
     let arrayBuffer;
-    try {
-        arrayBuffer = await file.arrayBuffer();
-        logDiag("تم قراءة الملف إلى ArrayBuffer بنجاح.");
-    } catch (err) {
-        showError("خطأ أثناء قراءة الملف (ArrayBuffer).");
-        console.error(err);
-        return;
-    }
+    try { arrayBuffer = await file.arrayBuffer(); logDiag("تم قراءة الملف إلى ArrayBuffer."); } 
+    catch (err) { showError("خطأ أثناء قراءة الملف."); console.error(err); return; }
 
-    // 4) فتح workbook
     let workbook;
-    try {
-        workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: "array" });
-        logDiag(`تم فتح ملف Excel. عدد الأوراق: ${workbook.SheetNames.length}`);
-        if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
-            showError("الملف لا يحتوي على أوراق (sheets).");
-            return;
-        }
-    } catch (err) {
-        showError("خطأ أثناء تحليل ملف Excel بواسطة XLSX.read.");
-        console.error(err);
-        return;
-    }
+    try { workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: "array" }); logDiag(`تم فتح ملف Excel. أوراق: ${workbook.SheetNames.length}`); }
+    catch (err) { showError("خطأ أثناء تحليل الملف."); console.error(err); return; }
 
-    // 5) اختَر الورقة الأولى
     const firstSheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[firstSheetName];
-    logDiag(`إستخدام الورقة الأولى: "${firstSheetName}"`);
+    logDiag(`استخدام الورقة الأولى: "${firstSheetName}"`);
 
-    // 6) اقرأ الصفوف كـ array of arrays (header:1)
     let rows;
-    try {
-        rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
-        logDiag(`عدد الصفوف المقروءة (raw): ${rows.length}`);
-        if (!rows || rows.length === 0) {
-            showError("الورقة فارغة — لا توجد بيانات لقراءتها.");
-            return;
-        }
-    } catch (err) {
-        showError("خطأ أثناء تحويل الورقة إلى صفوف (sheet_to_json header:1).");
-        console.error(err);
-        return;
-    }
+    try { rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" }); logDiag(`عدد الصفوف المقروءة: ${rows.length}`); }
+    catch (err) { showError("خطأ أثناء تحويل الورقة إلى صفوف."); console.error(err); return; }
+    if (!rows || rows.length === 0) { showError("الورقة فارغة."); return; }
 
-    // 7) عرض أول 10 صفوف للمراجعة السريعة
-    const previewCount = Math.min(10, rows.length);
-    logDiag("---- معاينة أول 10 صفوف ----");
-    for (let i = 0; i < previewCount; i++) {
-        logDiag(`صف ${i + 1}: ${JSON.stringify(rows[i])}`);
-    }
-    logDiag("----------------------------");
-
-    // 8) أسماء الأعمدة المقبولة لكل عمود
     const required = {
-        "Sku Code": ["Sku Code", "SkuCode", "SKUCode", "SKU CODE", "Sku_Code"],
-        "Item Code": ["Item Code", "ItemCode", "ITEM CODE"],
-        "Size": ["Size", "SIZE"],
-        "Color Code": ["Color Code", "ColorCode", "COLOR CODE"],
-        "Total Warehouse Stock": ["Total Warehouse Stock", "Warehouse Stock", "FWareHouseStock"],
-        "Total Sales Stock": ["Total Sales Stock", "Sales Stock"]
+        "Sku Code": ["Sku Code","SkuCode","SKUCode","SKU CODE","Sku_Code"],
+        "Item Code": ["Item Code","ItemCode","ITEM CODE"],
+        "Size": ["Size","SIZE"],
+        "Color Code": ["Color Code","ColorCode","COLOR CODE"],
+        "Total Warehouse Stock": ["Total Warehouse Stock","Warehouse Stock","FWareHouseStock"],
+        "Total Sales Stock": ["Total Sales Stock","Sales Stock"]
     };
 
-    // البحث عن صف العناوين
     let headerRowIndex = -1;
     for (let i = 0; i < Math.min(rows.length, 50); i++) {
-        const r = rows[i].map(c => (c === null || c === undefined) ? "" : String(c).trim().toLowerCase());
+        const r = rows[i].map(c => (c===null||c===undefined)?"":String(c).trim().toLowerCase());
         let foundAll = true;
         for (const colName in required) {
-            const possible = required[colName].map(x => x.toLowerCase());
-            if (!r.some(cell => possible.includes(cell))) {
-                foundAll = false;
-                break;
-            }
+            const possible = required[colName].map(x=>x.toLowerCase());
+            if (!r.some(cell => possible.includes(cell))) { foundAll=false; break; }
         }
-        if (foundAll) {
-            headerRowIndex = i;
-            break;
-        }
+        if (foundAll) { headerRowIndex=i; break; }
     }
+    if (headerRowIndex===-1) { showError("تعذر العثور على صف العناوين."); return; }
+    logDiag(`تم العثور على صف العناوين في الصف ${headerRowIndex+1}.`);
+    const header = rows[headerRowIndex].map(h => (h===null||h===undefined)?"":String(h).trim());
 
-    if (headerRowIndex === -1) {
-        showError("تعذر العثور على صف العناوين (headers) بعد التحديث.");
-        return;
+    const colIndex = {}; const missing=[];
+    for(const colName in required){
+        const possible=required[colName].map(x=>x.toLowerCase());
+        let found=-1;
+        for(let i=0;i<header.length;i++){ if(possible.includes(String(header[i]).toLowerCase())){found=i;break;} }
+        if(found===-1) missing.push(colName); else colIndex[colName]=found;
     }
+    if(missing.length){ showError("الأعمدة التالية مفقودة: "+missing.join(", ")); logDiag("عناوين الصف الموجودة: "+JSON.stringify(header)); return; }
+    logDiag("جميع الأعمدة المطلوبة موجودة.");
 
-    logDiag(`تم العثور على صف العناوين في الصف رقم ${headerRowIndex + 1}.`);
-    const header = rows[headerRowIndex].map(h => (h === null || h === undefined) ? "" : String(h).trim());
-
-    // بناء map للأعمدة المطلوبة
-    const colIndex = {};
-    const missing = [];
-    for (const colName in required) {
-        const possible = required[colName].map(x => x.toLowerCase());
-        let found = -1;
-        for (let i = 0; i < header.length; i++) {
-            if (possible.includes(String(header[i]).toLowerCase())) {
-                found = i;
-                break;
-            }
-        }
-        if (found === -1) missing.push(colName);
-        else colIndex[colName] = found;
-    }
-
-    if (missing.length) {
-        showError("الأعمدة التالية مفقودة: " + missing.join(", "));
-        logDiag("عناوين الصف الموجودة: " + JSON.stringify(header));
-        return;
-    }
-
-    logDiag("جميع الأعمدة المطلوبة موجودة في صف العناوين.");
-
-    // جلب الصفوف الحقيقية بعد صف العناوين
-    const dataRows = rows.slice(headerRowIndex + 1);
+    const dataRows = rows.slice(headerRowIndex+1);
     logDiag(`عدد صفوف البيانات بعد العنوان: ${dataRows.length}`);
 
-    // تفريغ الجدول القديم
     const tbody = document.querySelector("#resultTable tbody");
-    tbody.innerHTML = "";
+    tbody.innerHTML="";
 
-    // ترشيح ومعالجة الصفوف
-    let refillCount = 0;
-    let invalidRows = 0;
-    let processedRows = 0;
+    // ------------------- التجميع حسب Item Code + Color Code -------------------
+    const grouped = {};
+    dataRows.forEach((r, idx)=>{
+        const itemCode = r[colIndex["Item Code"]];
+        const colorCode = r[colIndex["Color Code"]];
 
-    dataRows.forEach((r, idx) => {
-        const wCell = r[colIndex["Total Warehouse Stock"]];
-        const sCell = r[colIndex["Total Sales Stock"]];
+        let warehouse = Number(r[colIndex["Total Warehouse Stock"]]);
+        let sales = Number(r[colIndex["Total Sales Stock"]]);
 
-        const warehouse = (wCell === "" || wCell === null || wCell === undefined) ? NaN : Number(String(wCell).replace(/,/g, "").trim());
-        const sales = (sCell === "" || sCell === null || sCell === undefined) ? NaN : Number(String(sCell).replace(/,/g, "").trim());
+        // تحويل القيم السالبة إلى 0
+        if (!Number.isFinite(warehouse) || warehouse <= 0) warehouse = 0;
+        if (!Number.isFinite(sales) || sales < 0) sales = 0;
 
-        if (!Number.isFinite(warehouse) && !Number.isFinite(sales)) {
-            invalidRows++;
-            logDiag(`تجاهلنا صف بيانات رقم ${headerRowIndex + 2 + idx} لعدم احتوائه على أرقام صالحة.`, "warn");
-            return;
-        }
+        // تجاهل المنتجات بدون مخزون في المخزن
+        if (warehouse === 0) return;
 
-        processedRows++;
-
-        if (Number.isFinite(sales) && Number.isFinite(warehouse) && sales < 6 && warehouse > 0) {
-            refillCount++;
-            const tr = document.createElement("tr");
-            const safe = v => (v === undefined || v === null) ? "" : String(v);
-            tr.innerHTML = `
-                <td>${escapeHtml(safe(r[colIndex["Sku Code"]]))}</td>
-                <td>${escapeHtml(safe(r[colIndex["Item Code"]]))}</td>
-                <td>${escapeHtml(safe(r[colIndex["Size"]]))}</td>
-                <td>${escapeHtml(safe(r[colIndex["Color Code"]]))}</td>
-                <td>${escapeHtml(safe(warehouse))}</td>
-                <td>${escapeHtml(safe(sales))}</td>
-            `;
-            tbody.appendChild(tr);
-        }
+        const key = `${itemCode}__${colorCode}`;
+        if(!grouped[key]) grouped[key]={itemCode,colorCode,totalWarehouse:0,totalSales:0};
+        grouped[key].totalWarehouse += warehouse;
+        grouped[key].totalSales += sales;
     });
 
-    // نتائج نهائية
-    if (refillCount === 0) {
-        showOK(`تم الفحص — لا منتجات تحتاج تعبئة (0).`);
-    } else {
-        showOK(`تم الفحص — ${refillCount} منتجات تحتاج تعبئة.`);
-    }
+    // فلترة المنتجات التي تحتاج تعبئة
+    const filtered = Object.values(grouped).filter(p=>p.totalSales<4 && p.totalWarehouse>0);
+    let refillCount = filtered.length;
 
-    logDiag(`ملخص الفحص: processedRows=${processedRows}, invalidRows=${invalidRows}, refillCount=${refillCount}`);
+    // عرض النتائج
+    filtered.forEach(p=>{
+        const tr = document.createElement("tr");
+        tr.innerHTML=`
+            <td>${escapeHtml(p.itemCode)}</td>
+            <td>${escapeHtml(p.colorCode)}</td>
+            <td>${escapeHtml(p.totalWarehouse)}</td>
+            <td>${escapeHtml(p.totalSales)}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    if(refillCount===0){ showOK("تم الفحص — لا منتجات تحتاج تعبئة (0)."); }
+    else { showOK(`تم الفحص — ${refillCount} منتجات تحتاج تعبئة.`); }
+
+    logDiag(`ملخص الفحص: مجموع المنتجات المحتاجة للتعبئة: ${refillCount}`);
     logDiag("انتهت عملية الفحص.");
-
-}); // نهاية event listener
+});
 
 // دالة مساعدة لتجنب مشاكل HTML
-function escapeHtml(s) {
-    if (typeof s !== "string") s = String(s);
-    return s.replace(/[&<>"']/g, function (m) {
-        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);
-    });
-}
+function escapeHtml(s){if(typeof s!=="string") s=String(s);return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
