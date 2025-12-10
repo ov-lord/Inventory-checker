@@ -1,81 +1,121 @@
-body {
-    font-family: "Segoe UI", Arial, sans-serif;
+/* ---------- General Reset ---------- */
+* {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    background: #f4f6f8;
-    color: #333;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* ---------- Body ---------- */
+body {
+    background-color: #f4f6f8;
+    color: #333;
+    line-height: 1.5;
+    padding: 20px;
+}
+
+/* ---------- Header ---------- */
 .header {
-    background: #1a73e8;
-    color: white;
-    padding: 22px 40px;
     font-size: 28px;
     font-weight: 600;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-}
-
-.container {
-    max-width: 1100px;
-    margin: 40px auto;
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 25px rgba(0,0,0,0.08);
-}
-
-.upload-box {
-    border: 2px dashed #1a73e8;
-    padding: 30px;
     text-align: center;
-    border-radius: 12px;
-    background: #f8fbff;
-    transition: 0.3s;
+    margin-bottom: 30px;
+    color: #2c3e50;
 }
 
-.upload-box:hover {
-    background: #eef5ff;
+/* ---------- Container ---------- */
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 25px 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
 }
 
-input[type=file] {
+/* ---------- Upload Box ---------- */
+.upload-box {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.upload-box h2 {
+    font-size: 20px;
+    margin-bottom: 10px;
+    color: #34495e;
+}
+
+.upload-box p {
+    font-size: 14px;
+    color: #555;
+}
+
+#fileInput {
     margin-top: 12px;
-    font-size: 16px;
+    padding: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    transition: all 0.2s;
 }
 
-.summary {
-    margin-top: 25px;
-    display: none;
+#fileInput:hover {
+    border-color: #2c3e50;
 }
 
+/* ---------- Badge ---------- */
 .badge {
-    background: #1a73e8;
-    padding: 8px 20px;
+    display: inline-block;
+    padding: 8px 14px;
     border-radius: 20px;
-    color: white;
-    font-size: 15px;
+    color: #fff;
     font-weight: 600;
+    margin-bottom: 20px;
+    transition: background 0.3s;
 }
 
+/* ---------- Diagnostics Pre ---------- */
+#diagDetails {
+    max-height: 180px;
+    overflow-y: auto;
+    font-family: monospace;
+}
+
+/* ---------- Table ---------- */
 .table-container {
-    margin-top: 30px;
     overflow-x: auto;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
+    margin-top: 15px;
 }
 
-th, td {
-    padding: 14px;
+table th, table td {
+    padding: 10px 12px;
+    text-align: center;
     border-bottom: 1px solid #ddd;
 }
 
-th {
-    background: #f1f1f1;
+table th {
+    background-color: #2c3e50;
+    color: #fff;
     font-weight: 600;
 }
 
-tr:hover {
-    background: #f9fcff;
+table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+table tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 600px) {
+    .header { font-size: 22px; }
+    .upload-box h2 { font-size: 18px; }
+    table th, table td { padding: 8px 10px; font-size: 12px; }
 }

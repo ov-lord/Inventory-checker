@@ -5,6 +5,7 @@
     <title>Inventory Refill Checker</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
+    <!-- SheetJS Library -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 </head>
 <body>
@@ -14,28 +15,29 @@
 <div class="container">
 
     <div class="upload-box">
-        <h2>Upload Your Product CSV File</h2>
-        <p>Your file must contain the columns:<br>
-            <b>Total Warehouse Stock</b> and <b>Total Sales Stock</b>
+        <h2>Upload Your Product Excel/CSV File</h2>
+        <p>The file must contain the columns:<br>
+            <b>Item Code</b>, <b>Color Code</b>, <b>Total Warehouse Stock</b>, <b>Total Sales Stock</b>
         </p>
-        <input type="file" id="fileInput" accept=".xlsx, .csv, .xls">
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
     </div>
 
     <div id="summary" class="summary">
         <span class="badge" id="countBadge">0 Products Need Refill</span>
     </div>
 
+    <pre id="diagDetails" style="white-space: pre-wrap; background:#fff; padding:12px; border-radius:8px; box-shadow:0 1px 6px rgba(0,0,0,0.08); margin-top:12px; font-size:13px;"></pre>
+
     <div class="table-container">
         <table id="resultTable">
             <thead>
-    <tr>
-        <th>Item Code</th>
-        <th>Color Code</th>
-        <th>Total Warehouse Stock</th>
-        <th>Total Sales Stock</th>
-    </tr>
-</thead>
-
+                <tr>
+                    <th>Item Code</th>
+                    <th>Color Code</th>
+                    <th>Total Warehouse Stock</th>
+                    <th>Total Sales Stock</th>
+                </tr>
+            </thead>
             <tbody></tbody>
         </table>
     </div>
