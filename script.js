@@ -1,50 +1,31 @@
 const fileInput = document.getElementById("fileInput");
 const badge = document.getElementById("countBadge");
 const diag = document.getElementById("diagDetails");
+const exportBtn = document.getElementById("exportBtn");
 
-// Logging function for diagnostics
-function logDiag(msg, level = "info") {
-//
-}
+let filteredGroups = []; // store current results
 
-// Clear diagnostics
 function clearDiag() { diag.textContent = ""; }
-
-// Show error
-function showError(msg) { 
-    badge.textContent = msg; 
-    badge.style.background="#d9534f"; 
-    logDiag(msg,"error"); 
-}
-
-// Show success
-function showOK(msg) { 
-    badge.textContent = msg; 
-    badge.style.background="#5cb85c"; 
-    logDiag(msg,"ok"); 
-}
+function showError(msg) { badge.textContent = msg; badge.style.background="#d9534f"; }
+function showOK(msg) { badge.textContent = msg; badge.style.background="#5cb85c"; }
 
 fileInput.addEventListener("change", async function(event) {
     clearDiag();
     const file = event.target.files[0];
-    if(!file){ showError("No file selected. Please choose an Excel (.xlsx/.xls) or CSV file."); return; }
-
-    logDiag(`Selected file: ${file.name}`);
+    if(!file){ showError("No file selected."); return; }
 
     let arrayBuffer;
     try { arrayBuffer = await file.arrayBuffer(); } 
-    catch(err){ showError("Error reading the file."); console.error(err); return; }
+    catch(err){ showError("Error reading the file."); return; }
 
     let workbook;
     try { workbook = XLSX.read(new Uint8Array(arrayBuffer), { type:"array" }); } 
-    catch(err){ showError("Error parsing Excel file."); console.error(err); return; }
+    catch(err){ showError("Error parsing Excel file."); return; }
 
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     let rows;
     try { rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:""}); } 
-    catch(err){ showError("Error converting sheet to rows."); console.error(err); return; }
-
-    logDiag(`Number of rows read: ${rows.length}`);
+    catch(err){ showError("Error converting sheet to rows."); return; }
 
     // Find header row
     const requiredCols = ["Item Code","Color Code","Total Warehouse Stock","Total Sales Stock"];
@@ -56,20 +37,15 @@ fileInput.addEventListener("change", async function(event) {
             break;
         }
     }
-
     if(headerRowIndex === -1){ showError("Header row not found."); return; }
 
-    logDiag(`Header row found at row ${headerRowIndex+1}`);
     const header = rows[headerRowIndex];
     const colIndex = {};
-    requiredCols.forEach(col=>{
-        colIndex[col] = header.indexOf(col);
-    });
+    requiredCols.forEach(col=>{ colIndex[col] = header.indexOf(col); });
 
     const dataRows = rows.slice(headerRowIndex+1);
 
-    // 🔥 Grouping and filtering
-    const filteredGroups = groupAndFilter(dataRows, colIndex);
+    filteredGroups = groupAndFilter(dataRows, colIndex);
 
     // Display results
     const tbody = document.querySelector("#resultTable tbody");
@@ -81,10 +57,9 @@ fileInput.addEventListener("change", async function(event) {
     });
 
     showOK(`Scan completed — ${filteredGroups.length} products need refill.`);
-    logDiag("Scan finished successfully.");
 });
 
-// 🟢 Group by Item Code + Color Code
+// Group + sum
 function groupAndFilter(dataRows, colIndex){
     const groups = {};
     dataRows.forEach(r=>{
@@ -104,6 +79,18 @@ function groupAndFilter(dataRows, colIndex){
         groups[key].sales += sales;
     });
 
-    // Filter: products with total sales < 4 and warehouse > 0
     return Object.values(groups).filter(g=>g.sales<6 && g.warehouse>0);
 }
+
+// Export Excel
+exportBtn.addEventListener("click", ()=>{
+    if(filteredGroups.length === 0){ alert("No results to export."); return; }
+    const wsData = [["Item Code","Color Code","Total Warehouse Stock","Total Sales Stock"]];
+    filteredGroups.forEach(g=>{
+        wsData.push([g.itemCode, g.colorCode, g.warehouse, g.sales]);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Refill Results");
+    XLSX.writeFile(wb, "refill_results.xlsx");
+});
