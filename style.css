@@ -93,9 +93,11 @@ body {
 
 /* ---------- Diagnostics Pre ---------- */
 #diagDetails {
-    max-height: 180px;
+  /*  max-height: 180px;
     overflow-y: auto;
     font-family: monospace;
+    */
+    display: none;
 }
 
 /* ---------- Table ---------- */
@@ -153,4 +155,5 @@ table tr:hover {
     color: #2c3e50;
     font-weight: 600;
 }
+
 
