@@ -135,3 +135,22 @@ table tr:hover {
     .upload-box h2 { font-size: 18px; }
     table th, table td { padding: 8px 10px; font-size: 12px; }
 }
+/* ---------- Footer ---------- */
+.site-footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid #e6e6e6;
+    text-align: center;
+}
+
+.footer-text {
+    font-size: 13px;
+    color: #555;
+    line-height: 1.6;
+}
+
+.footer-text .author {
+    color: #2c3e50;
+    font-weight: 600;
+}
+
