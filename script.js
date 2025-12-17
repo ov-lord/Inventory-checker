@@ -83,14 +83,35 @@ function groupAndFilter(dataRows, colIndex){
 }
 
 // Export Excel
-exportBtn.addEventListener("click", ()=>{
-    if(filteredGroups.length === 0){ alert("No results to export."); return; }
-    const wsData = [["Item Code","Color Code","Total Warehouse Stock","Total Sales Stock"]];
-    filteredGroups.forEach(g=>{
-        wsData.push([g.itemCode, g.colorCode, g.warehouse, g.sales]);
+exportBtn.addEventListener("click", () => {
+    if (filteredGroups.length === 0) {
+        alert("No results to export.");
+        return;
+    }
+
+    // Header
+    const wsData = [[
+        "Product Code",
+        "Total Warehouse Stock",
+        "Total Sales Stock"
+    ]];
+
+    // Data
+    filteredGroups.forEach(g => {
+        const productCode = `${g.itemCode}${g.colorCode}`;
+
+        wsData.push([
+            productCode,
+            g.warehouse,
+            g.sales
+        ]);
     });
+
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Refill Results");
-    XLSX.writeFile(wb, "refill_results.xlsx");
+
+    XLSX.writeFile(wb, "Inventory_Refill_Report.xlsx");
 });
+
+
